@@ -32,8 +32,8 @@ def update(args):
     if args.full:
         subprocess.call(["apt-get", "update"])
     else:
-        source = 'Dir::Etc::sourcelist=/etc/apt/sources.list.d/.list'.format(COMPANY_NAME)
-        subprocess.call(["apt-get", "update", '-o', souce, '-o', 'Dir::Etc::sourceparts=-', '-o', 'APT::Get::List-Cleanup="0"'])
+        source = 'Dir::Etc::sourcelist=/etc/apt/sources.list.d/{}.list'.format(COMPANY_NAME)
+        subprocess.call(["apt-get", "update", '-o', source, '-o', 'Dir::Etc::sourceparts=-', '-o', 'APT::Get::List-Cleanup="0"'])
     #subprocess.call(["apt-get", "update"])
 
 

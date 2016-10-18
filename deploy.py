@@ -196,7 +196,7 @@ def _extract_modules(args):
 
 def _restart(host, modules, action):
     _check_version(host)
-    _call(["ssh", "{ }".format(host), 
+    _call(["ssh", "{}".format(host),
         "sudo ~/deploy-target.py restart -a {} -m {}".format(action, " ".join(modules))])
     
 
@@ -208,6 +208,7 @@ def _install(host, modules):
 
 
 def _update_target(host, is_full):
+    _check_version(host)
     if is_full:
         _call(["ssh", "{}".format(host), "sudo ~/deploy-target.py update --full"])
     else:
@@ -225,17 +226,17 @@ def _publish(module, stage):
     _call(["sbt", "project {}".format(module), "set debRepoStage := \"{}\"".format(stage), "publishDebs"])
 
 
-_base_docs_url = "http://doc.company.int/docs/{}/"
+_base_docs_url = "http://doc.{}/docs/{}/"
 _doc_user=""
 _doc_password=""
 def _publish_docs(stage):
     _log("publishing docs to {}".format(stage))
     try:
         for schema in ["v1.api.json"]:
-                url = _base_docs_url.format(stage) + schema
+                url = _base_docs_url.format(DOMAIN, stage) + schema
 
                 latest_schema = re.sub("v[\d]+", "latest", schema)
-                latest_url = _base_docs_url.format(stage) + latest_schema
+                latest_url = _base_docs_url.format(DOMAIN, stage) + latest_schema
 
                 schemaPath = "schema/schemas/generated/{}".format(schema)
                 _call(["curl", "--user", "{}:{}".format(_doc_user, _doc_password), "-T", schemaPath, url])
@@ -271,7 +272,7 @@ def _log(msg):
 
         
 def _sync_sources():
-    sync_cmd = ['rsync', '--delete', '--exclude=.**', '--exclude=target', '--exclude=logs', '--exclude=__pycache__', '-avzh', '.', "{}:repo-name".format(remoteHost)]
+    sync_cmd = ['rsync', '--delete', '--exclude=.**', '--exclude=target', '--exclude=logs', '--exclude=__pycache__', '-avzh', '.', "{}:{}".format(remoteHost, REPO_NAME)]
     exit_code = subprocess.call(sync_cmd, stdout=log, stderr=log)
     
 
@@ -279,7 +280,7 @@ def _sync_sources():
 topParser = argparse.ArgumentParser()
 topParser.add_argument("-v", "--verbose", dest="verbose", action="store_true", help = "do not redirect output to /dev/null")
 
-topParser.add_argument("-r", "--remote", dest="remote", choices=["127.0.0.1"], help = "execute all commands at the remote host")
+topParser.add_argument("-r", "--remote", dest="remote", choices=["build00"], help = "execute all commands at the remote host")
 
 subParsers = topParser.add_subparsers(title = "Command categories")
 
@@ -362,7 +363,7 @@ try:
             cmd.append(a)
         
         cmd = ["'" + arg + "'" for arg in cmd]
-        cmd = ["cd", "repo-name", ";"] + cmd
+        cmd = ["cd", REPO_NAME, ";"] + cmd
         c = ' '.join(cmd)
         cmd = ["ssh", remoteHost, c]
         _call(cmd)
